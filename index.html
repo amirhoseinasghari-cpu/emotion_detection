@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه رایگان تشخیص احساسات - EmotionAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        
+        .camera-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        #video {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 10px;
+            border: 3px solid #4facfe;
+            background: #000;
+        }
+        
+        #processedImage {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 10px;
+            border: 3px solid #4CAF50;
+            display: none;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 600px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        button {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+        
+        .emotion-display {
+            font-size: 4em;
+            text-align: center;
+            margin: 20px 0;
+            height: 80px;
+        }
+        
+        .confidence-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4facfe;
+        }
+        
+        .history {
+            margin-top: 30px;
+        }
+        
+        .history-item {
+            background: white;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-right: 4px solid #4facfe;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-emoji {
+            font-size: 1.5em;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info-section {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 سامانه رایگان تشخیص احساسات</h1>
+            <p>تشخیص هوشمند احساسات از طریق دوربین - کاملاً رایگان</p>
+        </div>
+        
+        <div class="content">
+            <div class="camera-section">
+                <h3>📷 دوربین</h3>
+                <video id="video" autoplay playsinline></video>
+                <img id="processedImage" alt="تصویر پردازش شده">
+                <canvas id="canvas" style="display: none;"></canvas>
+                
+                <div class="controls">
+                    <button id="captureBtn" onclick="captureAndAnalyze()">📸 تحلیل احساسات</button>
+                    <button onclick="toggleCamera()">🔄 تغییر دوربین</button>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>در حال پردازش تصویر...</p>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h3>🎯 نتایج تحلیل</h3>
+                <div class="emotion-display" id="emotionDisplay">😐</div>
+                <div id="emotionText" style="text-align: center; font-size: 1.2em; margin: 10px 0;">
+                    برای شروع دکمه "تحلیل احساسات" را بزنید
+                </div>
+                
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceBar" style="width: 0%"></div>
+                </div>
+                <div id="confidenceText" style="text-align: center;">اطمینان: 0%</div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalAnalyses">0</div>
+                        <div>تعداد تحلیل‌ها</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="facesDetected">0</div>
+                        <div>چهره تشخیص داده شده</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="history">
+                <h3>📝 تاریخچه تحلیل‌ها</h3>
+                <div id="historyList">
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        هنوز تحلیلی انجام نشده است
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h4>💡 راهنمای استفاده:</h4>
+                <p>1. ✅ اجازه دسترسی به دوربین را بدهید</p>
+                <p>2. 📸 دکمه "تحلیل احساسات" را بزنید</p>
+                <p>3. 😊 صورت خود را جلوی دوربین بگیرید</p>
+                <p>4. 🎯 نتایج را مشاهده کنید</p>
+                <p>5. 🔄 برای تحلیل جدید تکرار کنید</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🆓 این سامانه کاملاً رایگان است</p>
+            <p>⚡ Powered by AI - تشخیص احساسات هوشمند</p>
+        </div>
+    </div>
+
+    <script>
+        // متغیرهای全局
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let context = canvas.getContext('2d');
+        let currentStream = null;
+        let isFrontCamera = true;
+        let analysisHistory = [];
+        let totalAnalyses = 0;
+        
+        // راه‌اندازی دوربین
+        async function setupCamera() {
+            try {
+                const constraints = {
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: isFrontCamera ? 'user' : 'environment'
+                    } 
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+                
+                currentStream = stream;
+                video.srcObject = stream;
+                
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        resolve(video);
+                    };
+                });
+            } catch (err) {
+                alert('❌ خطا در دسترسی به دوربین: ' + err.message);
+                showError('دسترسی به دوربین ممکن نیست. لطفاً مجوزها را بررسی کنید.');
+                return null;
+            }
+        }
+        
+        // تغییر دوربین
+        async function toggleCamera() {
+            isFrontCamera = !isFrontCamera;
+            await setupCamera();
+        }
+        
+        // گرفتن عکس و تحلیل
+        async function captureAndAnalyze() {
+            const loading = document.getElementById('loading');
+            const captureBtn = document.getElementById('captureBtn');
+            
+            loading.style.display = 'block';
+            captureBtn.disabled = true;
+            
+            try {
+                const imageData = captureImage();
+                const result = await analyzeWithAI(imageData);
+                displayResult(result);
+                updateStats();
+                updateHistory(result);
+            } catch (error) {
+                showError('خطا در تحلیل تصویر: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                captureBtn.disabled = false;
+            }
+        }
+        
+        // گرفتن عکس از دوربین
+        function captureImage() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg');
+        }
+        
+        // تحلیل تصویر با AI (شبیه‌سازی)
+        function analyzeWithAI(imageData) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // شبیه‌سازی پردازش AI
+                    const emotions = [
+                        {name: "شاد", emoji: "😄", color: [0, 255, 0], confidence: 0.85 + Math.random() * 0.1},
+                        {name: "غمگین", emoji: "😢", color: [255, 0, 0], confidence: 0.78 + Math.random() * 0.1},
+                        {name: "عصبانی", emoji: "😠", color: [255, 100, 0], confidence: 0.82 + Math.random() * 0.1},
+                        {name: "متعجب", emoji: "😲", color: [0, 255, 255], confidence: 0.79 + Math.random() * 0.1},
+                        {name: "خنثی", emoji: "😐", color: [255, 255, 0], confidence: 0.75 + Math.random() * 0.1},
+                        {name: "خسته", emoji: "😴", color: [128, 128, 255], confidence: 0.70 + Math.random() * 0.1}
+                    ];
+                    
+                    // انتخاب تصادفی یک احساس (شبیه‌سازی AI)
+                    const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+                    const hasFace = Math.random() > 0.2; // 80% احتمال تشخیص چهره
+                    
+                    if (hasFace) {
+                        resolve({
+                            success: true,
+                            faces_detected: 1,
+                            analysis: [randomEmotion],
+                            processed_image: imageData // استفاده از همان تصویر
+                        });
+                    } else {
+                        resolve({
+                            success: false,
+                            faces_detected: 0,
+                            analysis: [],
+                            error: "چهره‌ای تشخیص داده نشد"
+                        });
+                    }
+                }, 1500); // شبیه‌سازی تاخیر پردازش
+            });
+        }
+        
+        // نمایش نتیجه
+        function displayResult(result) {
+            const emotionDisplay = document.getElementById('emotionDisplay');
+            const emotionText = document.getElementById('emotionText');
+            const confidenceBar = document.getElementById('confidenceBar');
+            const confidenceText = document.getElementById('confidenceText');
+            const processedImage = document.getElementById('processedImage');
+            const facesDetected = document.getElementById('facesDetected');
+            
+            facesDetected.textContent = result.faces_detected;
+            
+            if (result.success && result.analysis.length > 0) {
+                const analysis = result.analysis[0];
+                emotionDisplay.textContent = analysis.emoji;
+                emotionText.textContent = `احساس: ${analysis.name}`;
+                confidenceBar.style.width = (analysis.confidence * 100) + '%';
+                confidenceText.textContent = `اطمینان: ${(analysis.confidence * 100).toFixed(1)}%`;
+                
+                // نمایش تصویر پردازش شده
+                processedImage.src = result.processed_image;
+                processedImage.style.display = 'block';
+                video.style.display = 'none';
+                
+                // بازگشت به دوربین بعد از 3 ثانیه
+                setTimeout(() => {
+                    processedImage.style.display = 'none';
+                    video.style.display = 'block';
+                }, 3000);
+                
+            } else {
+                emotionDisplay.textContent = '❌';
+                emotionText.textContent = result.error || 'چهره‌ای تشخیص داده نشد';
+                confidenceBar.style.width = '0%';
+                confidenceText.textContent = 'اطمینان: 0%';
+            }
+        }
+        
+        // نمایش خطا
+        function showError(message) {
+            const emotionDisplay = document.getElementById('emotionDisplay');
+            const emotionText = document.getElementById('emotionText');
+            
+            emotionDisplay.textContent = '❌';
+            emotionText.textContent = message;
+        }
+        
+        // به روزرسانی آمار
+        function updateStats() {
+            totalAnalyses++;
+            document.getElementById('totalAnalyses').textContent = totalAnalyses;
+        }
+        
+        // به روزرسانی تاریخچه
+        function updateHistory(result) {
+            if (result.success && result.analysis.length > 0) {
+                const analysis = result.analysis[0];
+                const historyItem = {
+                    emotion: analysis.name,
+                    emoji: analysis.emoji,
+                    confidence: analysis.confidence,
+                    timestamp: new Date().toLocaleString('fa-IR')
+                };
+                
+                analysisHistory.unshift(historyItem);
+                
+                // محدود کردن تاریخچه به 10 مورد
+                if (analysisHistory.length > 10) {
+                    analysisHistory.pop();
+                }
+                
+                updateHistoryDisplay();
+            }
+        }
+        
+        // به روزرسانی نمایش تاریخچه
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            analysisHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div>
+                        <strong>${item.emoji} ${item.emotion}</strong>
+                        <div style="font-size: 0.8em; color: #666;">${item.timestamp}</div>
+                    </div>
+                    <div>${(item.confidence * 100).toFixed(1)}%</div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // راه‌اندازی اولیه
+        document.addEventListener('DOMContentLoaded', async function() {
+            await setupCamera();
+        });
+    </script>
+</body>
+</html>
